@@ -4,7 +4,7 @@ from datetime import datetime
 from io import StringIO
 import numpy as np
 from typing import Dict, List
-from states import get_state_data
+from myapp.states import get_state_data
 from scipy.stats import norm
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.impute import SimpleImputer

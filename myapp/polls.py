@@ -3,7 +3,7 @@ import requests
 from datetime import datetime
 from io import StringIO
 import numpy as np
-from states import get_state_data
+from myapp.states import get_state_data
 
 # print("Polling data...")
 
