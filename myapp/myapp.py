@@ -1,5 +1,5 @@
 import reflex as rx
-from analysis import main  # Import the refactored polling function
+from myapp.analysis import main  # Import the refactored polling function
 
 class PollState(rx.State):
     polling_data = {}  # Store polling data
