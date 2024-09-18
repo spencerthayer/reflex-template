@@ -1,7 +1,8 @@
 import reflex as rx
+import reflex.recharts as recharts  # Import recharts module
 from myapp.analysis import main
 import asyncio
-from typing import Dict, Any
+from typing import Dict, Any, List
 
 class PollState(rx.State):
     polling_data: Dict[str, Any] = {}
@@ -11,10 +12,11 @@ class PollState(rx.State):
         while True:
             self.is_loading = True
             try:
-                data = main()
+                data = await main()
                 if isinstance(data, dict):
                     self.polling_data = data
                 else:
+                    print(f"Unexpected data format from main(): {type(data)}")
                     self.polling_data = {}
             except Exception as e:
                 print(f"Error updating poll data: {e}")
@@ -27,18 +29,35 @@ class PollState(rx.State):
     async def start_periodic_update(self):
         await self.periodic_update()
 
+    @rx.var
+    def periods(self) -> List[str]:
+        return list(self.polling_data.keys())
+
 def poll_chart(period: str, result: Dict[str, Any]) -> rx.Component:
-    return rx.box(
-        rx.text(f"{period}:"),
-        rx.chart(
-            data=[{"candidate": candidate, "score": score[0], "margin": score[1]} 
-                  for candidate, score in result.get('polling_metrics', {}).items()],
-            type="bar",
-            x="candidate",
-            y="score",
-            title=f"Polling Results for {period}",
+    chart_data = [
+        {
+            "candidate": candidate,
+            "score": score[0],
+            "margin": score[1]
+        }
+        for candidate, score in result.get('polling_metrics', {}).items()
+    ]
+
+    return rx.vstack(
+        rx.heading(f"Polling Results for {period}", size="md"),
+        recharts.composed_chart(
+            recharts.bar(data_key="score", fill="#8884d8"),
+            recharts.error_bar(data_key="margin", width=4, stroke="red"),
+            recharts.x_axis(data_key="candidate"),
+            recharts.y_axis(),
+            recharts.cartesian_grid(stroke_dasharray="3 3"),
+            recharts.graphing_tooltip(),
+            data=chart_data,
+            height=300,
+            width="100%",
         ),
-        rx.text(f"OOB Variance: {result.get('oob_variance', 0):.2f}")
+        rx.text(f"OOB Variance: {result.get('oob_variance', 0):.2f}"),
+        margin_bottom="1em"
     )
 
 def index() -> rx.Component:
@@ -51,7 +70,7 @@ def index() -> rx.Component:
                 PollState.polling_data != {},
                 rx.vstack(
                     rx.foreach(
-                        PollState.polling_data.keys(),  # Iterate over keys
+                        PollState.periods,
                         lambda period: poll_chart(str(period), PollState.polling_data[period])
                     )
                 ),

@@ -1,7 +1,9 @@
+aiohttp
 asyncio
 beautifulsoup4
 numpy
 pandas
+plotly
 reflex
 requests
 scikit-learn
